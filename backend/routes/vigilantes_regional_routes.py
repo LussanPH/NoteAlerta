@@ -70,15 +70,26 @@ async def listar_notificacoes(
     ]
     
 
-@vr_router.get('/dados_superintendencia')
+@vr_router.get('/dados_superintendencia_coads')
 async def dados_superintendencia(usuario = Depends(get_usuario), session : Session = Depends(create_session)):
     try:
-        dados_superintendencia = session.query(Superintendencias_Ceara).filter(Superintendencias_Ceara.id == usuario.superintendencia).first()
+        dados_superintendencia = session.execute(
+            select(Superintendencias_Ceara, COADS.coads)
+            .join(COADS, Superintendencias_Ceara.id == COADS.fk_superintendencia)
+            .where(Superintendencias_Ceara.id == usuario.superintendencia)
+        ).all()
         
         if not dados_superintendencia:
             raise HTTPException(status_code=400, detail='Superintendência do usuário não encontrada.')
         
-        return {'Dados da Superintendência' : dados_superintendencia}
+        return [
+            {
+                "Superintendencia":dados.nome,
+                "COADS":coads
+            }
+
+            for dados, coads in dados_superintendencia
+        ]
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'Erro ao tentar encontrar dados da superintendência: {e}')
