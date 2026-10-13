@@ -1,11 +1,11 @@
 # Sentinela Saúde — Backend
 
-API do **Sentinela Saúde**, aplicativo para monitoramento de notificações registradas por **Agentes Comunitários de Saúde (ACS)** e **Agentes de Combate a Endemias (ACE)**.
+API do **NoteAlerta**, aplicativo para monitoramento de notificações registradas por **Agentes Comunitários de Saúde (ACS)** e **Agentes de Combate a Endemias (ACE)**.
 
 O backend expõe endpoints REST consumidos pelo frontend em React, organizando as notificações por município e superintendência regional, e gera relatórios em PDF.
 
-> 🔗 Frontend: `TODO: link do repositório do frontend`
-> 🌐 API em produção: `TODO: URL do serviço no Render`
+> 🔗 Frontend: `https://github.com/GuilhermeGasparr/yara-project-front/tree/main`
+> 🌐 API em produção: `https://yara-project.onrender.com`
 
 ---
 
@@ -28,16 +28,17 @@ O backend expõe endpoints REST consumidos pelo frontend em React, organizando a
 
 ## Funcionalidades
 
-- Cadastro e consulta de notificações de ACS/ACE
-- Filtro de notificações por superintendência regional e município
+- Cadastro e consulta de notificações de ACS/ACE, UBS, Coordenador Municipal, Vigilante Regional e Vigilante Estadual
+- Filtro e análise de dashboards e dados de notificações
 - Geração de relatórios em PDF das notificações
-- `TODO: autenticação/login, perfis de usuário, outras funcionalidades`
+- Visualização geográfica das notificações por município
+- Transcrição de Áudio via LLM para registro de descrição das notificações
 
 ## Tecnologias
 
 | Camada         | Ferramenta                                           | Uso no projeto                                       |
 | -------------- | ---------------------------------------------------- | ---------------------------------------------------- |
-| Linguagem      | Python `TODO: versão`                                | Base do backend                                      |
+| Linguagem      | Python 3.13                                          | Base do backend                                      |
 | Framework web  | [FastAPI](https://fastapi.tiangolo.com/)             | Criação dos endpoints REST                           |
 | Servidor ASGI  | [Uvicorn](https://www.uvicorn.org/)                  | Execução da aplicação                                |
 | ORM            | [SQLAlchemy 2.0](https://docs.sqlalchemy.org/en/20/) | Mapeamento das tabelas e consultas                   |
@@ -52,8 +53,6 @@ O backend expõe endpoints REST consumidos pelo frontend em React, organizando a
 
 ## Estrutura do projeto
 
-> `TODO: ajustar para a árvore real do repositório`
-
 ```
 backend/
 ├── alembic/
@@ -61,9 +60,8 @@ backend/
 │   └── env.py           # Configuração das migrações (lê a DATABASE_URL)
 ├── routers/             # Endpoints agrupados por recurso
 ├── schemas/             # Modelos Pydantic (entrada/saída da API)
-├── config.py            # Configurações e DATABASE_URL
-├── database.py          # Engine, sessão e dependência get_session
-├── models.py            # Base e modelos SQLAlchemy
+├── config.py            # Registro das variáveis de ambiente
+├── models.py            # Base e modelos SQLAlchemy, juntamente com a conexão ao banco de dados
 ├── main.py              # Instância do FastAPI e registro dos routers
 ├── alembic.ini
 ├── pyproject.toml
@@ -82,8 +80,8 @@ backend/
 ### 1. Clonar o repositório
 
 ```bash
-git clone TODO: url-do-repositorio
-cd TODO: pasta-do-backend
+git clone git@github.com:LussanPH/Yara_project.git
+cd NoteAlerta/backend
 ```
 
 ### 2. Instalar as dependências
@@ -97,19 +95,10 @@ O `uv` cria o ambiente virtual (`.venv`) e instala as versões fixadas no `uv.lo
 ### 3. Subir o banco Postgres em um container
 
 ```bash
-docker run -d \
-  --name sentinela-postgres \
-  -e POSTGRES_USER=TODO_usuario \
-  -e POSTGRES_PASSWORD=TODO_senha \
-  -e POSTGRES_DB=TODO_banco \
-  -p 5433:5432 \
-  -v sentinela-pgdata:/var/lib/postgresql/data \
-  postgres:TODO_versao
+docker compose up -d
 ```
 
 > A porta **5433** do host é usada para não conflitar com um Postgres instalado nativamente na porta 5432. O volume `sentinela-pgdata` mantém os dados quando o container é recriado.
-
-> `TODO: se o projeto usar docker-compose.yml, substituir este passo por "docker compose up -d"`
 
 ### 4. Configurar as variáveis de ambiente
 
@@ -128,21 +117,26 @@ uv run alembic upgrade head
 ### 6. Iniciar a API
 
 ```bash
-uv run uvicorn main:app --reload
+uv run uvicorn main:app --port 0.0.0.0 --port 8000 --reload
 ```
 
-A API ficará disponível em `http://localhost:8000`.
-
-> `--reload` reinicia o servidor a cada alteração no código. Use **apenas em desenvolvimento**.
+A API ficará disponível em `http://localhost:8000` ou `http://127.0.0.1:8000`.
 
 ## Variáveis de ambiente
 
-| Variável       | Descrição                                                | Exemplo                                                   |
-| -------------- | -------------------------------------------------------- | --------------------------------------------------------- |
-| `DATABASE_URL` | String de conexão com o Postgres                         | `postgresql+psycopg://usuario:senha@localhost:5433/banco` |
-| `TODO`         | `TODO: chave secreta de autenticação, origens CORS etc.` |                                                           |
-
-> ⚠️ Nunca versione o arquivo `.env`. Mantenha apenas o `.env.example`, sem valores reais.
+| Variável                        | Descrição                                                                  |
+| ------------------------------- | -------------------------------------------------------------------------- |
+| `DATABASE_URL`                  | String de conexão com o Postgres                                           |
+| `SECRET_KEY`                    | Segredo utilizado para a criação do JWT                                    |
+| `ALGORITHM`                     | O cálculo utilizado para a criação do JWT                                  |
+| `ACCESS_TOKEN_EXPIRATE_MINUTES` | Tempo que uma JWT expira                                                   |
+| `GROQ_API_KEY`                  | Chave API do Groq para transcrição de áudio                                |
+| `CLOUDINARY_CLOUD_NAME`         | Variáveis do serviço cloudinary para armazenamento de imagens e documentos |
+| `CLOUDINARY_API_KEY`            | Variáveis do serviço cloudinary para armazenamento de imagens e documentos |
+| `CLOUDINARY_API_SECRET`         | Variáveis do serviço cloudinary para armazenamento de imagens e documentos |
+| `POSTGRES_USER`                 | Nome do usuário do postgres local                                          |
+| `POSTGRES_PASSWORD`             | Senha do usuário postgres local                                            |
+| `POSTGRES_DB`                   | Nome do banco de dados local                                               |
 
 ## Migrações do banco (Alembic)
 
