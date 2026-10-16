@@ -79,6 +79,7 @@ async def login(
 
     if tipo_login == "ACS/ACE":
         dados_usuario["cargo"] = usuario.cargo
+        dados_usuario["microarea"] = usuario.microarea
 
     elif tipo_login == "CM":
         dados_usuario["cargo"] = "Coordenador Municipal"
