@@ -4,8 +4,8 @@ from sqlalchemy import select
 from dependencies import create_session, somente_CM, get_usuario
 from security import get_hashed_password
 from fastapi.responses import Response
-from models import Notificacao, Coordenador_Municipal, UBS, Agente
-from schemas import CMSchema, UBSSchema, AgenteSchema
+from models import Notificacao, Coordenador_Municipal, UBS, Agente, Dados_UBS
+from schemas import CMSchema, UBSSchema, AgenteSchema, Notificacao_com_Dados_UBS, NotificacaoSchema
 from fastapi.responses import StreamingResponse
 from io import BytesIO
 from xml.sax.saxutils import escape
@@ -68,9 +68,26 @@ async def criar_ubs(ubs_schema : UBSSchema, session : Session = Depends(create_s
 @cm_router.get("/listar_notificacoes")
 async def listar_notificacoes_ubs(usuario = Depends(get_usuario), session : Session = Depends(create_session)):
     try:
-        notificacoes = session.query(Notificacao).filter(Notificacao.municipio == usuario.municipio, Notificacao.rascunho == False).all() 
+        notificacoes = session.execute(
+            select(Notificacao, Dados_UBS)
+            .join(Agente, Notificacao.acs_ace_id == Agente.id)
+            .join(Dados_UBS, Agente.ubs_atuante == Dados_UBS.id)
+            .where(Notificacao.municipio == usuario.municipio)
+        ).all()
 
-        return {"notificacoes": notificacoes, "quantidade": len(notificacoes)}
+        return{
+            "Notificacao": [
+                    Notificacao_com_Dados_UBS(
+                        **NotificacaoSchema.model_validate(notificacao).model_dump(),
+                        nome_ubs= dado_ubs.nome
+                    )
+                
+                
+                for notificacao, dado_ubs in notificacoes
+                ],
+            "Quantidade": len(notificacoes)
+        }
+        
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao buscar notificações: {str(e)}")

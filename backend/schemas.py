@@ -144,4 +144,29 @@ class Notificacao_com_Coads_e_Superintendencia(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class Notificacao_com_Dados_UBS(BaseModel):
+    nome : str
+    tipo_evento : str
+    categoria : str
+    data_envio : datetime.datetime
+    data_ocorrencia : datetime.datetime
+    pessoas_animais_infectados_afetados : int
+    local_ocorrencia : str
+    estado : str
+    municipio : str
+    endereco : str | None
+    latitude : float | None
+    longitude : float | None
+    continuidade_situacao : str
+    descricao : str
+    acs_ace_id : int
+    status : str
+    rascunho : bool
+    verificada : bool
+    nome_ubs : str
+    
+    class Config:
+        from_attributes = True
     

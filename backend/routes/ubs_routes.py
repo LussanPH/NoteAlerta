@@ -82,6 +82,7 @@ async def listar_notificacoes_ubs(
                 "descricao": notificacao.descricao,
                 "acs_ace_id": notificacao.acs_ace_id,
                 "acs_ace_nome": agente.nome,
+                "acs_ace_microarea": agente.microarea,
                 "status": notificacao.status,
                 "rascunho": notificacao.rascunho,
             })

@@ -64,8 +64,8 @@ try:
                             status, rascunho, verificada) \
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'
             
-            dados_cliente = ('Doença aviária', 'EPIZOOTIA', 'Doença de Aves', datetime.now(), data_ocorrencia, 15, 'Ambiente Rural', 'Ceará', 'Tauá', 'Não sei', 
-                             'Várias aves com doença aviária', 4, 'PENDENTE', False, False)
+            dados_cliente = ('Influenza - Guararapes', 'DOENÇA', 'Doença Respiratório', datetime.now(), data_ocorrencia, 100, 'Shopping', 'Ceará', 'Fortaleza', 'Não sei', 
+                             'Vários casos de influenza confirmados na região de guararapes', 2, 'PENDENTE', False, False)
             cursor.execute(query_insert, dados_cliente)
             
             """
