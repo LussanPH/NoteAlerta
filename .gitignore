@@ -9,6 +9,11 @@ __pycache__/
 
 *.log
 
+.venv
+
 *.db
 
-.venv
+migrar.py
+migrar_postgres.py
+sqlite_db_teste.py
+test_requests.py

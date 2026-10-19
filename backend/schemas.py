@@ -32,12 +32,20 @@ class NotificacaoSchema(BaseModel):
     tipo_evento : str
     categoria : str
     data_envio : datetime.datetime
+    data_ocorrencia : datetime.datetime
     pessoas_animais_infectados_afetados : int
     local_ocorrencia : str
+    estado : str
+    municipio : str
+    endereco : str | None
+    latitude : float | None
+    longitude : float | None
     continuidade_situacao : str
     descricao : str
+    acs_ace_id : int
     status : str
     rascunho : bool
+    verificada : bool
     
     class Config:
         from_attributes = True
@@ -82,6 +90,83 @@ class VigilanteEstadualSchema(BaseModel):
     senha: str
 
     class Config:
-        from_attributes = True    
+        from_attributes = True   
 
+
+# Schema de Saída de uma Notificação para Vigilante Regional
+
+class Notificacao_com_Coads(BaseModel):
+    nome : str
+    tipo_evento : str
+    categoria : str
+    data_envio : datetime.datetime
+    data_ocorrencia : datetime.datetime
+    pessoas_animais_infectados_afetados : int
+    local_ocorrencia : str
+    estado : str
+    municipio : str
+    endereco : str | None
+    latitude : float | None
+    longitude : float | None
+    continuidade_situacao : str
+    descricao : str
+    acs_ace_id : int
+    status : str
+    rascunho : bool
+    verificada : bool
+    coads : str
+    
+    class Config:
+        from_attributes = True   
+
+
+class Notificacao_com_Coads_e_Superintendencia(BaseModel):
+    nome : str
+    tipo_evento : str
+    categoria : str
+    data_envio : datetime.datetime
+    data_ocorrencia : datetime.datetime
+    pessoas_animais_infectados_afetados : int
+    local_ocorrencia : str
+    estado : str
+    municipio : str
+    endereco : str | None
+    latitude : float | None
+    longitude : float | None
+    continuidade_situacao : str
+    descricao : str
+    acs_ace_id : int
+    status : str
+    rascunho : bool
+    verificada : bool
+    coads : str
+    superintendencia: str
+    
+    class Config:
+        from_attributes = True
+
+
+class Notificacao_com_Dados_UBS(BaseModel):
+    nome : str
+    tipo_evento : str
+    categoria : str
+    data_envio : datetime.datetime
+    data_ocorrencia : datetime.datetime
+    pessoas_animais_infectados_afetados : int
+    local_ocorrencia : str
+    estado : str
+    municipio : str
+    endereco : str | None
+    latitude : float | None
+    longitude : float | None
+    continuidade_situacao : str
+    descricao : str
+    acs_ace_id : int
+    status : str
+    rascunho : bool
+    verificada : bool
+    nome_ubs : str
+    
+    class Config:
+        from_attributes = True
     

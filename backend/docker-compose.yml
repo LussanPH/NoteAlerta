@@ -1,0 +1,35 @@
+services:
+  db-test:
+    image: postgres:16
+    container_name: db_test
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER : ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata_test:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d {POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  db-clone:
+    image: postgres:16
+    profiles: ["tools"]
+    depends_on:
+      db-test:
+        condition: service_healthy
+    environment:
+      REMOTE_DATABASE_URL: ${REMOTE_DATABASE_URL}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    command: >
+      sh -c 'pg_dump -Fc --no-owner --no-acl "$$REMOTE_DATABASE_URL" |
+      pg_restore --no-owner --clean --if-exists
+      -h db-test -U ${POSTGRES_USER} -d ${POSTGRES_DB}'
+
+volumes:
+  pgdata_test:
