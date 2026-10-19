@@ -1,4 +1,4 @@
-# Sentinela Saúde — Backend
+# NoteAlerta — Backend
 
 API do **NoteAlerta**, aplicativo para monitoramento de notificações registradas por **Agentes Comunitários de Saúde (ACS)** e **Agentes de Combate a Endemias (ACE)**.
 
