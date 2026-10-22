@@ -105,7 +105,7 @@ async def status_em_investigacao(notificacao_id: int, usuario = Depends(get_usua
     notificacao.status = "EM INVESTIGAÇÃO"
     session.commit()
 
-    return {"message":f"Status da notificação {notificacao_id}: Em investigação!"}
+    return {"status_code": 200, "id_notificacao":notificacao_id, "status_notificacao":notificacao.status}
 
 
 @cm_router.patch("/notificacoes/{notificacao_id}/status_veridico")
@@ -118,7 +118,7 @@ async def status_veridico(notificacao_id: int, usuario = Depends(get_usuario), s
     notificacao.status = "VERÍDICO"
     session.commit()
 
-    return {"message":f"Status da notificação {notificacao_id}: Verídico!"}
+    return {"status_code": 200, "id_notificacao":notificacao_id, "status_notificacao":notificacao.status}
 
 
 @cm_router.patch("/notificacoes/{notificacao_id}/status_nao_veridico")
@@ -131,7 +131,7 @@ async def status_descartado(notificacao_id: int, usuario = Depends(get_usuario),
     notificacao.status = "NÃO VERÍDICO"
     session.commit()
 
-    return {"message":f"Status da notificação {notificacao_id}: Não Verídico!"}
+    return {"status_code": 200, "id_notificacao":notificacao_id, "status_notificacao":notificacao.status}
 
 
 @cm_router.patch("/notificacoes/{notificacao_id}/status_encerrado")
@@ -144,7 +144,7 @@ async def status_encerrado(notificacao_id: int, usuario = Depends(get_usuario), 
     notificacao.status = "ENCERRADO"
     session.commit()
 
-    return {"message":f"Status da notificação {notificacao_id}: Encerrado!"}
+    return {"status_code": 200, "id_notificacao":notificacao_id, "status_notificacao":notificacao.status}
 
 
 @cm_router.patch("/notificacoes/{notificacao_id}/complementar")
