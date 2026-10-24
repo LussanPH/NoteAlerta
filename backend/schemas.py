@@ -28,6 +28,7 @@ class UBSSchema(BaseModel):
 
 #Schema das notificações a serem postadas pelos agentes acs/ace
 class NotificacaoSchema(BaseModel):
+    id: int
     nome : str
     tipo_evento : str
     categoria : str
@@ -96,6 +97,7 @@ class VigilanteEstadualSchema(BaseModel):
 # Schema de Saída de uma Notificação para Vigilante Regional
 
 class Notificacao_com_Coads(BaseModel):
+    id: int
     nome : str
     tipo_evento : str
     categoria : str
@@ -121,6 +123,7 @@ class Notificacao_com_Coads(BaseModel):
 
 
 class Notificacao_com_Coads_e_Superintendencia(BaseModel):
+    id: int
     nome : str
     tipo_evento : str
     categoria : str
@@ -147,6 +150,7 @@ class Notificacao_com_Coads_e_Superintendencia(BaseModel):
 
 
 class Notificacao_com_Dados_UBS(BaseModel):
+    id: int
     nome : str
     tipo_evento : str
     categoria : str
