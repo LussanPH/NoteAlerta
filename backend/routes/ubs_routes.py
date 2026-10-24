@@ -186,6 +186,23 @@ async def status_encerrado(notificacao_id: int, session: Session = Depends(creat
 
 
 
+@ubs_router.delete("/notificacoes/{notificacao_id}/deletar")
+async def deletar_notificacao(notificacao_id : int, session : Session = Depends(create_session)):
+    notificacao = session.scalars(
+        select(Notificacao)
+        .where(Notificacao.id == notificacao_id)
+    ).first()
+    
+    if not notificacao:
+        raise HTTPException(status_code=404, detail="Notificação não encontrada")
+    
+    session.delete(notificacao)
+    session.commit()
+    
+    return {"status_code": 200, "id_notificacao":notificacao_id, "message":f"Notificação {notificacao.id} excluída com sucesso"}
+
+
+
 @ubs_router.get("/exportar_relatorio")
 async def exportar_relatorio(usuario = Depends(get_usuario), session: Session = Depends(create_session)):
     try:
