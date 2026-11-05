@@ -5,7 +5,7 @@ from dependencies import create_session, somente_CM, get_usuario
 from security import get_hashed_password
 from models import Notificacao, Coordenador_Municipal, UBS, Agente, Dados_UBS
 from relatorio_xlsx import xlsx_response, relatorio_consolidado, relatorio_notificacao
-from filtros import FiltrosRelatorio, filtros_relatorio
+from filtros import FiltrosRelatorio, filtros_basicos
 from schemas import CMSchema, UBSSchema, AgenteSchema, Notificacao_com_Dados_UBS, NotificacaoSchema
 
 
@@ -206,7 +206,7 @@ async def exportar_relatorio(usuario = Depends(get_usuario), session: Session = 
 
 @cm_router.get("/exportar_relatorio/xlsx")
 async def exportar_relatorio_xlsx(
-    filtros: FiltrosRelatorio = Depends(filtros_relatorio),
+    filtros: FiltrosRelatorio = Depends(filtros_basicos),
     usuario=Depends(get_usuario),
     session: Session = Depends(create_session)
 ):

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from dependencies import create_session, token_verification, somente_Agente, get_usuario
 from models import Agente, UBS, Notificacao, NotificacaoMedia
 from relatorio_xlsx import xlsx_response, relatorio_consolidado, relatorio_notificacao
-from filtros import FiltrosRelatorio, filtros_relatorio_periodo
+from filtros import FiltrosRelatorio, filtros_basicos
 from typing import List, Annotated
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -208,7 +208,7 @@ async def exportar_relatorio(usuario = Depends(get_usuario), session: Session = 
 
 @acs_ace_router.get("/exportar_relatorio/xlsx")
 async def exportar_relatorio_xlsx(
-    filtros: FiltrosRelatorio = Depends(filtros_relatorio_periodo),
+    filtros: FiltrosRelatorio = Depends(filtros_basicos),
     usuario=Depends(get_usuario),
     session: Session = Depends(create_session)
 ):

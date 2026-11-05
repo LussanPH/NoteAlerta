@@ -2,7 +2,7 @@
 
 API do **NoteAlerta**, aplicativo para monitoramento de notificações registradas por **Agentes Comunitários de Saúde (ACS)** e **Agentes de Combate a Endemias (ACE)**.
 
-O backend expõe endpoints REST consumidos pelo frontend em React, organizando as notificações por município, COADS e superintendência regional, e gera relatórios em PDF.
+O backend expõe endpoints REST consumidos pelo frontend em React, organizando as notificações por município, COADS e superintendência regional, e gera relatórios em XLSX.
 
 > 🔗 Frontend: `https://github.com/GuilhermeGasparr/yara-project-front/tree/main`
 > 🌐 API em produção: `https://yara-project.onrender.com`
@@ -38,7 +38,7 @@ O backend expõe endpoints REST consumidos pelo frontend em React, organizando a
 - Criação hierárquica de contas: VE cria VE e VR, VR cria CM, CM e UBS criam ACS/ACE
 - Listagem de notificações restrita ao escopo de cada perfil (agente, UBS, município, superintendência ou estado)
 - Estatísticas para dashboard (Coordenador Municipal) e exportação de dados das notificações
-- Relatórios em PDF: consolidado por perfil e individual por notificação
+- Relatórios em XLSX: consolidado por perfil e individual por notificação
 
 ## Perfis de usuário
 
@@ -68,7 +68,7 @@ Cada perfil tem um prefixo de rotas próprio, protegido por uma dependência que
 | Transcrição    | [Groq](https://groq.com/) (`whisper-large-v3`)                | Transcrição de áudio para descrição                     |
 | Armazenamento  | [Cloudinary](https://cloudinary.com/)                         | Mídias anexadas às notificações                         |
 | Geocodificação | [Nominatim (OpenStreetMap)](https://nominatim.org/)           | Latitude/longitude a partir do endereço                 |
-| Relatórios     | [ReportLab](https://docs.reportlab.com/)                      | Geração de PDFs                                         |
+| Relatórios     | [openpyxl](https://openpyxl.readthedocs.io/)                  | Geração de planilhas XLSX                               |
 | Pacotes        | [uv](https://docs.astral.sh/uv/)                              | Gerenciamento de dependências e ambiente virtual        |
 | Containers     | [Docker](https://www.docker.com/)                             | Banco Postgres local                                    |
 | Deploy         | [Render](https://render.com/)                                 | Hospedagem da API e do banco em produção                |
@@ -254,8 +254,8 @@ A resposta traz `access_token`, `refresh_token`, `type_token` (`Bearer`) e os da
 | `POST` | `/agentes/criar_notificacao`                 | Cria uma notificação (formulário com mídias; permite rascunho) |
 | `POST` | `/agentes/transcricao_audio`                 | Transcreve um áudio enviado em texto            |
 | `GET`  | `/agentes/exportar_relatorio`                | Exporta os dados das notificações               |
-| `GET`  | `/agentes/exportar_relatorio/pdf`            | Gera o relatório consolidado em PDF             |
-| `GET`  | `/agentes/notificacoes/{notificacao_id}/relatorio_pdf` | Gera o relatório em PDF de uma notificação |
+| `GET`  | `/agentes/exportar_relatorio/xlsx`            | Gera o relatório consolidado em XLSX             |
+| `GET`  | `/agentes/notificacoes/{notificacao_id}/relatorio_xlsx` | Gera o relatório em XLSX de uma notificação |
 
 **UBS** (`/ubs`)
 
@@ -271,8 +271,8 @@ A resposta traz `access_token`, `refresh_token`, `type_token` (`Bearer`) e os da
 | `PATCH` | `/ubs/notificacoes/{notificacao_id}/status_nao_veridico` | Define o status como não verídico               |
 | `PATCH` | `/ubs/notificacoes/{notificacao_id}/status_encerrado` | Define o status como encerrado                     |
 | `GET`   | `/ubs/exportar_relatorio`                             | Exporta os dados das notificações                  |
-| `GET`   | `/ubs/exportar_relatorio/pdf`                         | Gera o relatório consolidado em PDF                |
-| `GET`   | `/ubs/notificacoes/{notificacao_id}/relatorio_pdf`    | Gera o relatório em PDF de uma notificação         |
+| `GET`   | `/ubs/exportar_relatorio/xlsx`                         | Gera o relatório consolidado em XLSX                |
+| `GET`   | `/ubs/notificacoes/{notificacao_id}/relatorio_xlsx`    | Gera o relatório em XLSX de uma notificação         |
 
 **Coordenador Municipal** (`/cm`)
 
@@ -288,8 +288,8 @@ A resposta traz `access_token`, `refresh_token`, `type_token` (`Bearer`) e os da
 | `PATCH` | `/cm/notificacoes/{notificacao_id}/status_encerrado`  | Define o status como encerrado                     |
 | `PATCH` | `/cm/notificacoes/{notificacao_id}/complementar`      | Adiciona informação extra (`informacao_extra`)     |
 | `GET`   | `/cm/exportar_relatorio`                              | Exporta os dados das notificações                  |
-| `GET`   | `/cm/exportar_relatorio/pdf`                          | Gera o relatório consolidado em PDF                |
-| `GET`   | `/cm/notificacoes/{notificacao_id}/relatorio_pdf`     | Gera o relatório em PDF de uma notificação         |
+| `GET`   | `/cm/exportar_relatorio/xlsx`                          | Gera o relatório consolidado em XLSX                |
+| `GET`   | `/cm/notificacoes/{notificacao_id}/relatorio_xlsx`     | Gera o relatório em XLSX de uma notificação         |
 
 **Vigilante Regional** (`/vr`)
 
@@ -299,8 +299,8 @@ A resposta traz `access_token`, `refresh_token`, `type_token` (`Bearer`) e os da
 | `GET`  | `/vr/notificacoes`                                 | Lista as notificações da superintendência, com o COADS |
 | `GET`  | `/vr/dados_superintendencia_coads`                 | Retorna os dados da superintendência e seus COADS      |
 | `GET`  | `/vr/exportar_relatorio`                           | Exporta os dados das notificações                      |
-| `GET`  | `/vr/exportar_relatorio/pdf`                       | Gera o relatório consolidado em PDF                    |
-| `GET`  | `/vr/notificacoes/{notificacao_id}/relatorio_pdf`  | Gera o relatório em PDF de uma notificação             |
+| `GET`  | `/vr/exportar_relatorio/xlsx`                       | Gera o relatório consolidado em XLSX                    |
+| `GET`  | `/vr/notificacoes/{notificacao_id}/relatorio_xlsx`  | Gera o relatório em XLSX de uma notificação             |
 
 **Vigilante Estadual** (`/ve`)
 
@@ -310,10 +310,20 @@ A resposta traz `access_token`, `refresh_token`, `type_token` (`Bearer`) e os da
 | `POST` | `/ve/criar_conta_vr`                               | Cria a conta de um Vigilante Regional                  |
 | `GET`  | `/ve/notificacoes`                                 | Lista as notificações de todo o estado, com COADS e superintendência |
 | `GET`  | `/ve/exportar_relatorio`                           | Exporta os dados das notificações                      |
-| `GET`  | `/ve/exportar_relatorio/pdf`                       | Gera o relatório consolidado em PDF                    |
-| `GET`  | `/ve/notificacoes/{notificacao_id}/relatorio_pdf`  | Gera o relatório em PDF de uma notificação             |
+| `GET`  | `/ve/exportar_relatorio/xlsx`                       | Gera o relatório consolidado em XLSX                    |
+| `GET`  | `/ve/notificacoes/{notificacao_id}/relatorio_xlsx`  | Gera o relatório em XLSX de uma notificação             |
 
 > Para parâmetros, corpos de requisição e respostas detalhados, consulte o Swagger UI.
+
+**Filtros do relatório consolidado.** Todos os `GET .../exportar_relatorio/xlsx` aceitam os query params opcionais abaixo; sem nenhum deles, o relatório traz todas as notificações que a conta enxerga.
+
+| Parâmetro     | Formato      | Descrição                                                              |
+|---------------|--------------|------------------------------------------------------------------------|
+| `data_inicio` | `YYYY-MM-DD` | Notificações com `data_ocorrencia` a partir deste dia                  |
+| `data_fim`    | `YYYY-MM-DD` | Notificações com `data_ocorrencia` até o fim deste dia (inclusive)     |
+| `agente_id`   | inteiro      | Apenas notificações deste agente (não disponível para `/agentes`)      |
+
+Exemplo: `GET /ubs/exportar_relatorio/xlsx?data_inicio=2026-10-01&data_fim=2026-10-31&agente_id=12`
 
 ## Deploy
 

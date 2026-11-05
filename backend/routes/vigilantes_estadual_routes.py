@@ -5,7 +5,7 @@ from dependencies import create_session, get_usuario, somente_VE
 from security import get_hashed_password
 from models import Notificacao, Vigilancia_Estadual, Vigilancia_Regional, COADS, Superintendencias_Ceara, Municipios, Agente, Dados_UBS
 from relatorio_xlsx import xlsx_response, relatorio_consolidado, relatorio_notificacao
-from filtros import FiltrosRelatorio, filtros_relatorio
+from filtros import FiltrosRelatorio, filtros_estadual
 from schemas import VigilanteEstadualSchema, VigilanteRegionalSchema, Notificacao_com_Coads_e_Superintendencia, NotificacaoSchema
 
 
@@ -107,7 +107,7 @@ async def exportar_relatorio(usuario = Depends(get_usuario), session: Session = 
 
 @ve_router.get("/exportar_relatorio/xlsx")
 async def exportar_relatorio_xlsx(
-    filtros: FiltrosRelatorio = Depends(filtros_relatorio),
+    filtros: FiltrosRelatorio = Depends(filtros_estadual),
     usuario=Depends(get_usuario),
     session: Session = Depends(create_session)
 ):
@@ -117,8 +117,6 @@ async def exportar_relatorio_xlsx(
             .join(Municipios, Notificacao.municipio == Municipios.municipio)
             .join(COADS, Municipios.fk_coads == COADS.id)
             .join(Superintendencias_Ceara, COADS.fk_superintendencia == Superintendencias_Ceara.id)
-            .join(Agente, Notificacao.acs_ace_id == Agente.id)
-            .join(Dados_UBS, Agente.ubs_atuante == Dados_UBS.id)
             .where(*filtros.condicoes())
             .order_by(Notificacao.data_ocorrencia.desc())
         ).all()

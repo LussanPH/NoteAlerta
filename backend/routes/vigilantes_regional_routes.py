@@ -5,7 +5,7 @@ from dependencies import create_session, get_usuario, somente_VR
 from security import get_hashed_password
 from models import Notificacao, Vigilancia_Regional, Superintendencias_Ceara, Coordenador_Municipal, Municipios, COADS
 from relatorio_xlsx import xlsx_response, relatorio_consolidado, relatorio_notificacao
-from filtros import FiltrosRelatorio, filtros_relatorio
+from filtros import FiltrosRelatorio, filtros_regional
 from schemas import VigilanteRegionalSchema, CMSchema, Notificacao_com_Coads, NotificacaoSchema
 
 
@@ -99,7 +99,7 @@ async def exportar_relatorio(usuario = Depends(get_usuario), session: Session = 
         ).first()
         
         if not dados_superintendencia:
-            raise HTTPException(status_code=404, detail=f"Nenhuma notificação encontada atrelada à superintendência com id: {usuario.ubs}")
+            raise HTTPException(status_code=404, detail=f"Nenhuma notificação encontada atrelada à superintendência com id: {usuario.superintendencia}")
         
         relatorio = [
             {
@@ -120,7 +120,7 @@ async def exportar_relatorio(usuario = Depends(get_usuario), session: Session = 
 
 @vr_router.get("/exportar_relatorio/xlsx")
 async def exportar_relatorio_xlsx(
-    filtros: FiltrosRelatorio = Depends(filtros_relatorio),
+    filtros: FiltrosRelatorio = Depends(filtros_regional),
     usuario=Depends(get_usuario),
     session: Session = Depends(create_session)
 ):
@@ -131,6 +131,7 @@ async def exportar_relatorio_xlsx(
             .join(COADS, Municipios.fk_coads == COADS.id)
             .join(Superintendencias_Ceara, COADS.fk_superintendencia == Superintendencias_Ceara.id)
             .where(Superintendencias_Ceara.id == usuario.superintendencia, *filtros.condicoes())
+            .order_by(Notificacao.data_ocorrencia.desc())
         ).all()
               
         dados_superintendencia = session.scalars(
@@ -139,7 +140,7 @@ async def exportar_relatorio_xlsx(
         ).first()
               
         if not dados_superintendencia:
-            raise HTTPException(status_code=404, detail=f"Nenhuma notificação encontada atrelada à superintendência com id: {usuario.ubs}")
+            raise HTTPException(status_code=404, detail=f"Nenhuma notificação encontada atrelada à superintendência com id: {usuario.superintendencia}")
 
         wb = relatorio_consolidado(
             {"Superintendência": dados_superintendencia.nome, **filtros.resumo(session, notificacoes)},
@@ -149,6 +150,8 @@ async def exportar_relatorio_xlsx(
 
         return xlsx_response(wb, f"relatorio_{dados_superintendencia.nome}.xlsx")
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=500,

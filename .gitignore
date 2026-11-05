@@ -14,6 +14,9 @@ __pycache__/
 *.db
 
 migrar.py
+migrar_sqlite.py
 migrar_postgres.py
 sqlite_db_teste.py
 test_requests.py
+frontend/
+detalhes.txt

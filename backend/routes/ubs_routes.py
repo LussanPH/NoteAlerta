@@ -5,7 +5,7 @@ from dependencies import create_session, somente_UBS, get_usuario
 from security import get_hashed_password
 from models import Notificacao, UBS, Agente, Dados_UBS
 from relatorio_xlsx import xlsx_response, relatorio_consolidado, relatorio_notificacao
-from filtros import FiltrosRelatorio, filtros_relatorio
+from filtros import FiltrosRelatorio, filtros_ubs
 from schemas import NotificacaoSchema, UBSSchema, AgenteSchema
 import datetime
 
@@ -225,7 +225,7 @@ async def exportar_relatorio(usuario = Depends(get_usuario), session: Session = 
 
 @ubs_router.get("/exportar_relatorio/xlsx")
 async def exportar_relatorio_xlsx(
-    filtros: FiltrosRelatorio = Depends(filtros_relatorio),
+    filtros: FiltrosRelatorio = Depends(filtros_ubs),
     usuario=Depends(get_usuario),
     session: Session = Depends(create_session)
 ):
@@ -254,6 +254,8 @@ async def exportar_relatorio_xlsx(
 
         return xlsx_response(wb, f"relatorio_{usuario.municipio}.xlsx")
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=500,
