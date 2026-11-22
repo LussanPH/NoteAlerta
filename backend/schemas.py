@@ -26,6 +26,17 @@ class UBSSchema(BaseModel):
     class Config:
         from_attributes = True
 
+#Schema de um anexo (imagem, vídeo ou documento) de uma notificação
+class MidiaSchema(BaseModel):
+    id: int
+    url: str
+    resource_type: str | None = None
+    nome_arquivo: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
 #Schema das notificações a serem postadas pelos agentes acs/ace
 class NotificacaoSchema(BaseModel):
     id: int
@@ -47,6 +58,7 @@ class NotificacaoSchema(BaseModel):
     status : str
     rascunho : bool
     verificada : bool
+    media_urls : list[MidiaSchema] = []
     
     class Config:
         from_attributes = True
@@ -116,6 +128,7 @@ class Notificacao_com_Coads(BaseModel):
     status : str
     rascunho : bool
     verificada : bool
+    media_urls : list[MidiaSchema] = []
     coads : str
     
     class Config:
@@ -142,6 +155,7 @@ class Notificacao_com_Coads_e_Superintendencia(BaseModel):
     status : str
     rascunho : bool
     verificada : bool
+    media_urls : list[MidiaSchema] = []
     coads : str
     superintendencia: str
     
@@ -169,6 +183,7 @@ class Notificacao_com_Dados_UBS(BaseModel):
     status : str
     rascunho : bool
     verificada : bool
+    media_urls : list[MidiaSchema] = []
     nome_ubs : str
     
     class Config:

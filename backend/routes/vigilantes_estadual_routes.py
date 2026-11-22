@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select
 from dependencies import create_session, get_usuario, somente_VE
 from security import get_hashed_password
@@ -52,6 +52,7 @@ async def listar_notificacoes(session : Session = Depends(create_session)):
     try:
         notificacoes = session.execute(
             select(Notificacao, COADS.coads, Superintendencias_Ceara.nome)
+            .options(selectinload(Notificacao.media_urls))
             .join(Municipios, Notificacao.municipio == Municipios.municipio)
             .join(COADS, Municipios.fk_coads == COADS.id)
             .join(Superintendencias_Ceara, COADS.fk_superintendencia == Superintendencias_Ceara.id)

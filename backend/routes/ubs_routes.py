@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select
 from dependencies import create_session, somente_UBS, get_usuario
 from security import get_hashed_password
 from models import Notificacao, UBS, Agente, Dados_UBS
 from relatorio_xlsx import xlsx_response, relatorio_consolidado, relatorio_notificacao
 from filtros import FiltrosRelatorio, filtros_relatorio
-from schemas import NotificacaoSchema, UBSSchema, AgenteSchema
+from schemas import NotificacaoSchema, UBSSchema, AgenteSchema, MidiaSchema
+from midias import remover_midias
 import datetime
 
 
@@ -40,6 +41,7 @@ async def listar_notificacoes_ubs(
     try:
         resultados = (
             session.query(Notificacao, Agente)
+            .options(selectinload(Notificacao.media_urls))
             .join(
                 Agente,
                 Notificacao.acs_ace_id == Agente.id
@@ -71,6 +73,10 @@ async def listar_notificacoes_ubs(
                 "acs_ace_microarea": agente.microarea,
                 "status": notificacao.status,
                 "rascunho": notificacao.rascunho,
+                "media_urls": [
+                    MidiaSchema.model_validate(midia).model_dump()
+                    for midia in notificacao.media_urls
+                ],
             })
 
         return {"notificacoes": notificacoes}
@@ -173,19 +179,30 @@ async def status_encerrado(notificacao_id: int, session: Session = Depends(creat
 
 
 @ubs_router.delete("/notificacoes/{notificacao_id}/deletar")
-async def deletar_notificacao(notificacao_id : int, session : Session = Depends(create_session)):
+async def deletar_notificacao(notificacao_id : int, usuario = Depends(get_usuario), session : Session = Depends(create_session)):
+    # Mesmo escopo da listagem: notificações enviadas pelos agentes desta UBS
     notificacao = session.scalars(
         select(Notificacao)
-        .where(Notificacao.id == notificacao_id)
+        .join(Agente, Notificacao.acs_ace_id == Agente.id)
+        .where(
+            Notificacao.id == notificacao_id,
+            Agente.ubs_atuante == usuario.ubs,
+            Notificacao.rascunho == False
+        )
     ).first()
     
     if not notificacao:
         raise HTTPException(status_code=404, detail="Notificação não encontrada")
     
+    # Guarda os dados dos anexos antes de apagar: depois do commit o ORM não os tem mais
+    midias = [(m.public_id, m.resource_type) for m in notificacao.media_urls]
+
     session.delete(notificacao)
     session.commit()
-    
-    return {"status_code": 200, "id_notificacao":notificacao_id, "message":f"Notificação {notificacao.id} excluída com sucesso"}
+
+    await remover_midias(midias)
+
+    return {"status_code": 200, "id_notificacao":notificacao_id, "message":f"Notificação {notificacao_id} excluída com sucesso"}
 
 
 
