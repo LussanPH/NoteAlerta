@@ -92,7 +92,12 @@ class Notificacao(Base):
     
     continuidade_situacao = Column("continuidade_situacao", String)
     descricao = Column("descricao", String)
-    media_urls = relationship("NotificacaoMedia", back_populates="notificacao")
+    media_urls = relationship(
+        "NotificacaoMedia",
+        back_populates="notificacao",
+        cascade="all, delete-orphan",
+        order_by="NotificacaoMedia.id",
+    )
     acs_ace_id = Column("acs_ace_id", ForeignKey("Agentes.id"))
     status = Column("status", String)
     rascunho = Column("rascunho", Boolean)
@@ -148,12 +153,19 @@ class NotificacaoMedia(Base):
     id = Column("id", Integer, primary_key=True, autoincrement=True)
     url = Column("url", String)
     notificacao_id = Column("notificacao_id", ForeignKey("Notificaçoes.id"))
+    # Anuláveis por causa dos registros anteriores à migração
+    public_id = Column("public_id", String, nullable=True)
+    resource_type = Column("resource_type", String, nullable=True)
+    nome_arquivo = Column("nome_arquivo", String, nullable=True)
 
     notificacao = relationship("Notificacao", back_populates="media_urls")
 
-    def __init__(self, url, notificacao_id):
+    def __init__(self, url, notificacao_id, public_id=None, resource_type=None, nome_arquivo=None):
         self.url = url
         self.notificacao_id = notificacao_id
+        self.public_id = public_id
+        self.resource_type = resource_type
+        self.nome_arquivo = nome_arquivo
 
 
 class Dados_UBS(Base):

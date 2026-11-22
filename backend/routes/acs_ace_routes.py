@@ -4,23 +4,18 @@ from models import Agente, UBS, Notificacao, NotificacaoMedia
 from relatorio_xlsx import xlsx_response, relatorio_consolidado, relatorio_notificacao
 from filtros import FiltrosRelatorio, filtros_relatorio_periodo
 from typing import List, Annotated
-from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy.orm import Session, selectinload
+from sqlalchemy import select, inspect as sa_inspect
 from security import get_hashed_password
 from datetime import datetime, date
-from config import GROK_API_KEY, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, CLOUDINARY_CLOUD_NAME
+from config import GROK_API_KEY
+from schemas import MidiaSchema
+from midias import validar_midias, enviar_midia, remover_midias
 from groq import Groq
-import cloudinary
-import cloudinary.uploader
+import logging
 import httpx
 
-
-cloudinary.config(
-    cloud_name = CLOUDINARY_CLOUD_NAME,
-    api_key = CLOUDINARY_API_KEY,
-    api_secret = CLOUDINARY_API_SECRET,
-    secure = True
-)
+logger = logging.getLogger(__name__)
 
 
 acs_ace_router = APIRouter(prefix="/agentes", tags=["Agentes"], dependencies=[Depends(somente_Agente)])
@@ -32,10 +27,28 @@ client = Groq(api_key=GROK_API_KEY)
 #Lista as notificações de um agente com base em quem está logado
 @acs_ace_router.get("/listar_notificacoes")
 async def listar_notificacoes(session : Session = Depends(create_session), usuario = Depends(get_usuario)):
-    notificacoes = session.query(Notificacao).filter(Notificacao.acs_ace_id == usuario.id).all()
+    notificacoes = (
+        session.query(Notificacao)
+        .options(selectinload(Notificacao.media_urls))
+        .filter(Notificacao.acs_ace_id == usuario.id)
+        .all()
+    )
+
+    # Mesmas colunas de antes, mais os anexos. Montado à mão para não expor o
+    # objeto ORM (e a referência circular notificacao <-> media) ao serializador.
+    colunas = [atributo.key for atributo in sa_inspect(Notificacao).column_attrs]
 
     return {
-        "Notificações" : notificacoes
+        "Notificações" : [
+            {
+                **{coluna: getattr(notificacao, coluna) for coluna in colunas},
+                "media_urls": [
+                    MidiaSchema.model_validate(midia).model_dump()
+                    for midia in notificacao.media_urls
+                ],
+            }
+            for notificacao in notificacoes
+        ]
     }
 
 
@@ -120,6 +133,9 @@ async def criar_notificacao(
     session : Session = Depends(create_session), 
     usuario = Depends(get_usuario)
 ):
+    # Valida os anexos antes de qualquer efeito colateral (geocodificação, banco, Cloudinary)
+    midias_validadas = validar_midias(medias)
+
     data_envio = datetime.now()
     data_ocorrencia = datetime.fromisoformat(str(data_ocorrencia_str))
     latitude = None
@@ -159,25 +175,32 @@ async def criar_notificacao(
     session.add(notificacao_nova)
     session.flush()
     
-    for media in medias:
-            if media.filename:
-                try:
-                    resultado = cloudinary.uploader.upload(media.file)
-    
-                    url_final = resultado.get("secure_url")
-    
-                    media_nova = NotificacaoMedia(
-                        url = url_final,
-                        notificacao_id = notificacao_nova.id
-                    )
+    enviadas = []
 
-                    session.add(media_nova)
-    
-                except Exception as e:
-                    session.rollback()
-                    return {"Erro":f"Falha ao enviar imagem {media.filename}: {str(e)}"}
-                
-    session.commit()
+    try:
+        for midia in midias_validadas:
+            enviada = await enviar_midia(midia)
+            enviadas.append(enviada)
+
+            session.add(NotificacaoMedia(
+                url = enviada.url,
+                notificacao_id = notificacao_nova.id,
+                public_id = enviada.public_id,
+                resource_type = enviada.resource_type,
+                nome_arquivo = enviada.nome_arquivo,
+            ))
+
+        session.commit()
+
+    except Exception:
+        logger.exception("Falha ao salvar a notificação com anexos")
+        session.rollback()
+        # Não deixa no Cloudinary o que já tinha sido enviado nesta requisição
+        await remover_midias([(m.public_id, m.resource_type) for m in enviadas])
+        raise HTTPException(
+            status_code=502,
+            detail="Não foi possível enviar os anexos. A notificação não foi criada, tente novamente."
+        )
 
     return {"response": f"Notificação {notificacao_nova.nome} criada com sucesso!"}
 
