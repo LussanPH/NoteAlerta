@@ -50,6 +50,7 @@ async def listar_notificacoes_ubs(
                 Agente.ubs_atuante == usuario.ubs,
                 Notificacao.rascunho == False
             )
+            .order_by(Notificacao.data_envio.desc().nulls_last(), Notificacao.id.desc())
             .all()
         )
 

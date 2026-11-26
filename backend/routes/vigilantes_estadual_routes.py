@@ -58,6 +58,7 @@ async def listar_notificacoes(session : Session = Depends(create_session)):
             .join(Superintendencias_Ceara, COADS.fk_superintendencia == Superintendencias_Ceara.id)
             .join(Agente, Notificacao.acs_ace_id == Agente.id)
             .join(Dados_UBS, Agente.ubs_atuante == Dados_UBS.id)
+            .order_by(Notificacao.data_envio.desc().nulls_last(), Notificacao.id.desc())
         ).all()
 
         return{

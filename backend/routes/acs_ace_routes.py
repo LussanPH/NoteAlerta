@@ -31,6 +31,7 @@ async def listar_notificacoes(session : Session = Depends(create_session), usuar
         session.query(Notificacao)
         .options(selectinload(Notificacao.media_urls))
         .filter(Notificacao.acs_ace_id == usuario.id)
+        .order_by(Notificacao.data_envio.desc().nulls_last(), Notificacao.id.desc())
         .all()
     )
 

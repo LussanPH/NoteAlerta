@@ -17,3 +17,7 @@ migrar.py
 migrar_postgres.py
 sqlite_db_teste.py
 test_requests.py
+backend/migrar_sqlite.py
+detalhes.txt
+frontend/
+alembic/__pycache__/
