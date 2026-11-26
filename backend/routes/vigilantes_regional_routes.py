@@ -45,6 +45,7 @@ async def listar_notificacoes(
         .join(Municipios, Notificacao.municipio == Municipios.municipio)
         .join(COADS, Municipios.fk_coads == COADS.id)
         .where(COADS.fk_superintendencia == usuario.superintendencia)
+        .order_by(Notificacao.data_envio.desc().nulls_last(), Notificacao.id.desc())
     ).all()
 
     return [

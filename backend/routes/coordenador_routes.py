@@ -59,6 +59,7 @@ async def listar_notificacoes_ubs(usuario = Depends(get_usuario), session : Sess
             .join(Agente, Notificacao.acs_ace_id == Agente.id)
             .join(Dados_UBS, Agente.ubs_atuante == Dados_UBS.id)
             .where(Notificacao.municipio == usuario.municipio)
+            .order_by(Notificacao.data_envio.desc().nulls_last(), Notificacao.id.desc())
         ).all()
 
         return{
